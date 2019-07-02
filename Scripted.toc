@@ -1,0 +1,27 @@
+## Interface: 80100
+## Title: Scripted
+## Version: 80100.1
+## Author: Saeris (saeris@pm.me)
+## License: MIT
+## SavedVariablesPerCharacter: Scripted_SavedData
+## Notes: Automate speech and other non-combat actions.
+
+lib\LibStub\LibStub.lua
+lib\AceLocale-3.0\AceLocale-3.0.xml
+lib\Immutable-1.0\Immutable.lua
+
+locale\enUS.lua
+
+utils.lua
+guiutils.lua
+events.lua
+store.lua
+config.lua
+config-gui.lua
+conditions.lua
+conditions-gui.lua
+conditions-chat.lua
+conditions-combat.lua
+actions.lua
+actions-gui.lua
+init.lua
