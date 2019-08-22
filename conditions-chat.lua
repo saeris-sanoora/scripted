@@ -32,12 +32,17 @@ for _, entry in ipairs(kLists) do
 		assert(group, groupName)
 		kChannels[groupName] = name
 		for _, chatEvent in ipairs(group) do
-			kChannelLookup[chatEvent] = groupName
+			-- Filter out events like UNIT_LEVEL.
+			if chatEvent:find('^CHAT_MSG_') then
+				kChannelLookup[chatEvent] = groupName
+			end
 		end
 	end
 end
 -- Rename this one for clarity.
 kChannels.CHANNEL = L['Numbered channel']
+-- CHAT_MSG_CHANNEL is not defined in any list by default.
+kChannelLookup['CHAT_MSG_CHANNEL'] = 'CHANNEL'
 
 local kFields = {
 	channel = {
@@ -75,13 +80,14 @@ local function onChatEvent(event, message, author, language, ...)
 	if author == _G.UnitName('player') then
 		return
 	end
+	local group = kChannelLookup[event]
 	local channelName = nil
-	if event == 'CHAT_MSG_CHANNEL' then
+	if group == 'CHANNEL' then
 		-- Custom channel name is event arg9.
-		channelName = select(5, ...)
+		channelName = select(6, ...)
 	end
 	local fields = {
-		channel = kChannelLookup[event],
+		channel = group,
 		channelName = channelName,
 		message = message,
 		author = author,
