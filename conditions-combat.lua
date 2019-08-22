@@ -109,7 +109,7 @@ local kEvents = {
 	aa_miss = {
 		name = L['Auto-attack misses'],
 		combatEvent = 'SWING_MISSED',
-		fields = mergeFields(kAmountLogFields, kCritLogFields),
+		fields = mergeFields(),
 	},
 	ability_hit = {
 		name = L['Ability hits'],
@@ -144,12 +144,12 @@ local kEvents = {
 	environment_damage = {
 		name = L['Environment deals damage'],
 		combatEvent = 'ENVIRONMENTAL_DAMAGE',
-		fields = kCommonLogFields,
+		fields = mergeFields(kAmountLogFields, kCritLogFields),
 	},
 	death = {
 		name = L['Something dies'],
 		combatEvent = 'PARTY_KILL',
-		fields = kCommonLogFields,
+		fields = mergeFields(),
 	},
 }
 
@@ -174,28 +174,31 @@ local function addSuffixFields(fields, prefix, suffix, ...)
 	local suffixArgsPos = 9
 	if prefix == 'SPELL' then
 		suffixArgsPos = suffixArgsPos + 3
+	elseif prefix == 'ENVIRONMENTAL' then
+		suffixArgsPos = suffixArgsPos + 1
 	end
-	local amount = 0
 	if suffix == 'DAMAGE' or suffix == 'HEAL' then
-		amount = select(suffixArgsPos, ...)
+		fields.amount = select(suffixArgsPos, ...)
 	end
-	fields.amount = amount
-	local isCrit = false
 	if suffix == 'DAMAGE' then
-		isCrit = select(suffixArgsPos + 6, ...)
+		fields.isCritical = not not select(suffixArgsPos + 6, ...)
 	elseif suffix == 'HEAL' then
-		isCrit = select(suffixArgsPos + 3, ...)
+		fields.isCritical = not not select(suffixArgsPos + 3, ...)
 	end
-	fields.isCritical = not not isCrit
 end
 
-local function onCombatEvent(_--[[event]], _--[[timestamp]], combatEvent, ...)
+local function onCombatEvent(_--[[event]], _--[[timestamp]], combatEvent, _--[[hideCaster]], ...)
+	--[[ Args:
+	timestamp, event, hideCaster,
+	1. sourceGUID, 2. sourceName, 3. sourceFlags, 4. sourceRaidFlags,
+	5. destGUID, 6. destName, 7. destFlags, 8. destRaidFlags
+	--]]
 	if not watchedCombatEvents[combatEvent] then
 		return
 	end
 	local event = kCombatEventToEvent[combatEvent]
 	local srcName, srcFlags = select(2, ...)
-	local destName, destFlags = select(5, ...)
+	local destName, destFlags = select(6, ...)
 	local fields = {
 		srcName = srcName,
 		srcType = bit.band(srcFlags, _G.COMBATLOG_OBJECT_TYPE_MASK),
