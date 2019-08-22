@@ -13,6 +13,7 @@ lib\Immutable-1.0\Immutable.lua
 locale\enUS.lua
 
 utils.lua
+tests.lua
 guiutils.lua
 events.lua
 store.lua
@@ -21,7 +22,10 @@ config-gui.lua
 conditions.lua
 conditions-gui.lua
 conditions-chat.lua
+conditions-chat-tests.lua
 conditions-combat.lua
+conditions-combat-tests.lua
 actions.lua
 actions-gui.lua
+actions-tests.lua
 init.lua

@@ -46,9 +46,9 @@ local function updateActionLine(line, item)
 end
 
 
-local function flattenActions(actions)
+local function flattenActions(actionGroups)
 	local flat = {}
-	for i, group in ipairs(actions) do
+	for i, group in ipairs(actionGroups) do
 		table.insert(flat, {
 			kind = 'group',
 			groupIndex = i,
@@ -73,7 +73,7 @@ function addon.actions.updateGUI(frame, entry)
 	frame:SetShown(not not entry)
 	if entry then
 		frame.test.extraTooltipText = nil
-		local items = flattenActions(entry.actions)
+		local items = flattenActions(entry.actionGroups)
 		addon.guiutils.updateScroller(frame.content.scroller, items, updateActionLine)
 	end
 end

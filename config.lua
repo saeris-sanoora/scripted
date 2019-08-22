@@ -54,9 +54,30 @@ local function loadSaved()
 end
 
 
+local function handleSlashCommand(message)
+	if message == 'test' then
+		addon.tests.run()
+	elseif message == 'debug' then
+		local state = addon.store.getState()
+		if state.debug then
+			addon.utils.print('Disabling debug mode.')
+		else
+			addon.utils.print('Enabling debug mode.')
+		end
+		addon.store.dispatch({ name = 'toggleDebug' })
+	else
+		-- Due to a Blizzard bug, this has to be run twice to actually open.
+		_G.InterfaceOptionsFrame_OpenToCategory(optionsPanel)
+		_G.InterfaceOptionsFrame_OpenToCategory(optionsPanel)
+	end
+end
+
+
 function addon.config.init()
 	optionsPanel = createGUI()
 	_G.InterfaceOptions_AddCategory(optionsPanel)
+	_G['SLASH_' .. kAddonName .. '1'] = '/' .. kAddonName:lower()
+	_G.SlashCmdList[kAddonName] = handleSlashCommand
 	addon.store.subscribe(onStoreChange)
 	loadSaved()
 end

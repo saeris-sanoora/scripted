@@ -2,6 +2,9 @@ local kAddonName, addon = ...
 addon.actions = {}
 local L = LibStub('AceLocale-3.0'):GetLocale(kAddonName)
 
+addon.actions.commandExecutor = _G.ChatEdit_SendText
+addon.actions.delayedCommandExecutor = _G.C_Timer.After
+
 local actionEditbox = _G.CreateFrame('EditBox', kAddonName .. '_ActionEditBox')
 actionEditbox:Hide()
 
@@ -27,7 +30,7 @@ local function execCommand(command)
 		normalizedCommand = rest
 	end
 	actionEditbox:SetText(normalizedCommand)
-	local success, err = pcall(_G.ChatEdit_SendText, actionEditbox, 1)
+	local success, err = pcall(addon.actions.commandExecutor, actionEditbox)
 	if not success then
 		addon.utils.softerror('Failed to run command\nCommand: %s\nError: %s', command, err)
 	end
@@ -38,7 +41,7 @@ local function execDelayedCommand(command, delay)
 	local function exec()
 		execCommand(command)
 	end
-	_G.C_Timer.After(delay, exec)
+	addon.actions.delayedCommandExecutor(delay, exec)
 end
 
 
@@ -120,7 +123,7 @@ function addon.actions.runEntry(entryIndex, fields)
 	local entry = state.entries[entryIndex]
 	local normalizedFields = normalizeFields(fields)
 	local alwaysIndexes, cooldownIndex = runGroups(
-		entry.actions, normalizedFields, state.globalAllowedTime)
+		entry.actionGroups, normalizedFields, state.globalAllowedTime)
 	local didSomething = #alwaysIndexes > 0 or not not cooldownIndex
 	if didSomething then
 		addon.store.dispatch({
@@ -133,12 +136,12 @@ function addon.actions.runEntry(entryIndex, fields)
 end
 
 
-function addon.actions.describe(actions)
-	if #actions == 0 then
+function addon.actions.describe(groups)
+	if #groups == 0 then
 		return ('[%s]'):format(L['no actions configured'])
 	end
 	local fullDescription = {}
-	for _, group in ipairs(actions) do
+	for _, group in ipairs(groups) do
 		local description = {}
 		for _, action in ipairs(group.actions) do
 			table.insert(description, action.command)

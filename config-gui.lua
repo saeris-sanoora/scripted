@@ -28,14 +28,14 @@ end
 
 
 local function describeEntry(entry)
-	local success, conditionsText = pcall(addon.conditions.describe, entry.conditions)
+	local success, conditionsText = pcall(addon.conditions.describe, entry.conditionGroups)
 	if success and entry.watch then
 		conditionsText = ('[+%s] %s'):format(L['Watch'], conditionsText)
 	end
 	if #conditionsText > 90 then
 		conditionsText = conditionsText:sub(1, 90) .. '...'
 	end
-	local _, actionsText = pcall(addon.actions.describe, entry.actions)
+	local _, actionsText = pcall(addon.actions.describe, entry.actionGroups)
 	if #actionsText > 90 then
 		actionsText = actionsText:sub(1, 90) .. '...'
 	end
@@ -89,8 +89,8 @@ local function clickCreate()
 	}
 	addon.store.dispatch({
 		name = 'createEntry',
-		conditions = {{event = event, conditions = conditions}},
-		actions = {{actions = {action}}},
+		conditionGroups = {{event = event, conditions = conditions}},
+		actionGroups = {{actions = {action}}},
 	})
 end
 
@@ -111,8 +111,8 @@ local function importEntryText(entryText)
 		name = 'createEntry',
 		cooldown = entry.cooldown,
 		watch = entry.watch,
-		conditions = entry.conditions,
-		actions = entry.actions,
+		conditionGroups = entry.conditionGroups,
+		actionGroups = entry.actionGroups,
 	})
 end
 
@@ -195,8 +195,8 @@ local function clickCreateHelperEntry(_--[[self]], entry)
 	addon.store.dispatch({
 		name = 'createEntry',
 		cooldown = entry.cooldown,
-		conditions = entry.conditions,
-		actions = entry.actions,
+		conditionGroups = entry.conditionGroups,
+		actionGroups = entry.actionGroups,
 	})
 end
 

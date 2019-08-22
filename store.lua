@@ -2,6 +2,7 @@ local _--[[kAddonName]], addon = ...
 local Immutable = LibStub('Immutable-1.0')
 
 local kDefaultState = {
+	debug = false,
 	isEditing = false,
 	globalCooldown = '0',
 	globalAllowedTime = 0,
@@ -17,8 +18,8 @@ local function normalizeConditions(conditions)
 end
 
 
-local function normalizeConditionGroups(conditions)
-	for _, group in ipairs(conditions) do
+local function normalizeConditionGroups(conditionGroups)
+	for _, group in ipairs(conditionGroups) do
 		assert(group.event)
 		normalizeConditions(group.conditions)
 	end
@@ -33,8 +34,8 @@ local function normalizeActions(actions)
 end
 
 
-local function normalizeActionGroups(actions)
-	for _, group in ipairs(actions) do
+local function normalizeActionGroups(actionGroups)
+	for _, group in ipairs(actionGroups) do
 		group.cooldown = group.cooldown or '0'
 		group.allowedTime = 0
 		if group.ignoreGlobalCooldown == nil then
@@ -46,13 +47,33 @@ local function normalizeActionGroups(actions)
 end
 
 
+local function setState(action)
+	return {
+		debug = action.state.debug,
+		isEditing = action.state.isEditing,
+		globalCooldown = action.state.globalCooldown,
+		globalAllowedTime = action.state.globalAllowedTime,
+		selectedEntryIndex = action.state.selectedEntryIndex,
+		entries = Immutable.assign(action.state.entries),
+	}
+end
+
+
 local function loadConfig(action)
 	return {
+		debug = false,
 		isEditing = false,
 		globalCooldown = action.config.globalCooldown,
 		globalAllowedTime = 0,
 		selectedEntryIndex = 0,
 		entries = Immutable.assign(action.config.entries),
+	}
+end
+
+
+local function toggleDebug(_--[[action]], state)
+	return {
+		debug = not state.debug,
 	}
 end
 
@@ -89,11 +110,11 @@ local function createEntry(action, state)
 		cooldown = action.cooldown or '0',
 		allowedTime = 0,
 		watch = false,
-		conditions = action.conditions or {},
-		actions = action.actions or {},
+		conditionGroups = action.conditionGroups or {},
+		actionGroups = action.actionGroups or {},
 	}
-	normalizeConditionGroups(entry.conditions)
-	normalizeActionGroups(entry.actions)
+	normalizeConditionGroups(entry.conditionGroups)
+	normalizeActionGroups(entry.actionGroups)
 	local index = #state.entries + 1
 	return {
 		selectedEntryIndex = index,
@@ -125,7 +146,7 @@ end
 
 local function setEntryWatch(action)
 	return editEntry(action, {
-		watch = action.watch,
+		watch = not not action.watch,
 	})
 end
 
@@ -143,7 +164,7 @@ local function addConditionGroup(action)
 	local conditions = action.conditions or {}
 	normalizeConditions(conditions)
 	return editEntry(action, {
-		conditions = Immutable.insert({
+		conditionGroups = Immutable.insert({
 			event = action.event,
 			conditions = conditions,
 		}),
@@ -153,7 +174,7 @@ end
 
 local function setConditionGroupEvent(action)
 	return editEntry(action, {
-		conditions = {
+		conditionGroups = {
 			[action.groupIndex] = Immutable.assign({
 				event = action.event,
 				conditions = action.conditions or {},
@@ -165,14 +186,14 @@ end
 
 local function deleteConditionGroup(action)
 	return editEntry(action, {
-		conditions = Immutable.remove(action.groupIndex),
+		conditionGroups = Immutable.remove(action.groupIndex),
 	})
 end
 
 
 local function addCondition(action)
 	return editEntry(action, {
-		conditions = {
+		conditionGroups = {
 			[action.groupIndex] = {
 				conditions = Immutable.insert({
 					field = action.field,
@@ -187,7 +208,7 @@ end
 
 local function editCondition(action)
 	return editEntry(action, {
-		conditions = {
+		conditionGroups = {
 			[action.groupIndex] = {
 				conditions = {
 					[action.conditionIndex] = {
@@ -204,7 +225,7 @@ end
 
 local function deleteCondition(action)
 	return editEntry(action, {
-		conditions = {
+		conditionGroups = {
 			[action.groupIndex] = {
 				conditions = Immutable.remove(action.conditionIndex),
 			},
@@ -221,7 +242,7 @@ local function addActionGroup(action)
 	local actions = action.actions or {}
 	normalizeActions(actions)
 	return editEntry(action, {
-		actions = Immutable.insert({
+		actionGroups = Immutable.insert({
 			cooldown = action.cooldown or '0',
 			allowedTime = 0,
 			ignoreGlobalCooldown = ignoreGlobalCooldown,
@@ -237,7 +258,7 @@ local function setActionGroupCooldown(action)
 		cooldown = tostring(action.cooldown)
 	end
 	return editEntry(action, {
-		actions = {
+		actionGroups = {
 			[action.groupIndex] = {
 				cooldown = cooldown,
 				allowedTime = 0,
@@ -249,7 +270,7 @@ end
 
 local function setActionGroupIgnoreGlobalCooldown(action)
 	return editEntry(action, {
-		actions = {
+		actionGroups = {
 			[action.groupIndex] = {
 				ignoreGlobalCooldown = action.ignore,
 			},
@@ -260,14 +281,14 @@ end
 
 local function deleteActionGroup(action)
 	return editEntry(action, {
-		actions = Immutable.remove(action.groupIndex),
+		actionGroups = Immutable.remove(action.groupIndex),
 	})
 end
 
 
 local function addAction(action)
 	return editEntry(action, {
-		actions = {
+		actionGroups = {
 			[action.groupIndex] = {
 				actions = Immutable.insert({
 					delay = action.delay or 0,
@@ -281,7 +302,7 @@ end
 
 local function editAction(action)
 	return editEntry(action, {
-		actions = {
+		actionGroups = {
 			[action.groupIndex] = {
 				actions = {
 					[action.actionIndex] = {
@@ -301,7 +322,7 @@ local function deleteAction(action, state)
 		return deleteActionGroup(action, state)
 	end
 	return editEntry(action, {
-		actions = {
+		actionGroups = {
 			[action.groupIndex] = {
 				actions = Immutable.remove(action.actionIndex),
 			},
@@ -318,7 +339,7 @@ local function updateAllowedTime(action, state)
 
 	local actionGroupChanges = {}
 	for _, groupIndex in ipairs(action.actionGroupIndexes) do
-		local group = entry.actions[groupIndex]
+		local group = entry.actionGroups[groupIndex]
 		local allowedTime = addon.utils.getCooldownAllowedTime(group.cooldown)
 		actionGroupChanges[groupIndex] = {
 			allowedTime = allowedTime,
@@ -330,7 +351,7 @@ local function updateAllowedTime(action, state)
 		entries = {
 			[action.entryIndex] = {
 				allowedTime = entryAllowedTime,
-				actions = actionGroupChanges,
+				actionGroups = actionGroupChanges,
 			},
 		},
 	}
@@ -338,7 +359,9 @@ end
 
 
 local kActionHandlers = {
+	setState = setState,
 	loadConfig = loadConfig,
+	toggleDebug = toggleDebug,
 	startEditing = startEditing,
 	stopEditing = stopEditing,
 	setGlobalCooldown = setGlobalCooldown,

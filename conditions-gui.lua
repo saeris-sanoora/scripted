@@ -60,16 +60,16 @@ local function updateConditionLine(line, item)
 end
 
 
-local function flattenConditions(conditions)
+local function flattenConditions(conditionGroups)
 	local flat = {}
-	for i, group in ipairs(conditions) do
+	for i, group in ipairs(conditionGroups) do
 		if i > 1 then
 			table.insert(flat, {kind = 'existingOr'})
 		end
 		table.insert(flat, {
 			kind = 'group',
 			groupIndex = i,
-			groupCount = #conditions,
+			groupCount = #conditionGroups,
 			event = group.event,
 			eventName = addon.conditions.getEventName(group.event),
 			conditionCount = #group.conditions,
@@ -102,7 +102,7 @@ function addon.conditions.updateGUI(frame, entry)
 	if entry then
 		frame.cooldown:SetText(entry.cooldown)
 		frame.watch:SetChecked(entry.watch)
-		local items = flattenConditions(entry.conditions)
+		local items = flattenConditions(entry.conditionGroups)
 		addon.guiutils.updateScroller(frame.content.scroller, items, updateConditionLine)
 	end
 end

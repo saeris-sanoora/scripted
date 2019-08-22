@@ -1,5 +1,4 @@
 local kAddonName, addon = ...
-addon.doProfile = true
 
 
 local function onEventAddonLoaded(_--[[event]], name)

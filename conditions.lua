@@ -88,7 +88,7 @@ local function checkEntry(entry, categoryEvent, fields)
 	if addon.utils.now() < entry.allowedTime then
 		return false
 	end
-	return addon.utils.any(entry.conditions, checkGroup, categoryEvent, fields)
+	return addon.utils.any(entry.conditionGroups, checkGroup, categoryEvent, fields)
 end
 
 
@@ -205,7 +205,7 @@ end
 
 
 local function addEntryEvents(entryIndex, entry)
-	for _, group in ipairs(entry.conditions) do
+	for _, group in ipairs(entry.conditionGroups) do
 		local event = group.event
 		local eventInfo = eventsRegistry[event]
 		if eventInfo then
@@ -260,9 +260,9 @@ function addon.conditions.dispatchEvent(category, event, fields)
 end
 
 
-function addon.conditions.describe(conditions)
+function addon.conditions.describe(groups)
 	local fullDescription = {}
-	for _, group in ipairs(conditions) do
+	for _, group in ipairs(groups) do
 		local groupDescription = {
 			getEventName(group.event),
 		}

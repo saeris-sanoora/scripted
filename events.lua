@@ -5,11 +5,18 @@ local eventsFrame = _G.CreateFrame('Frame', kAddonName .. '_EventsFrame')
 eventsFrame:Hide()
 local handlers = {}
 
-local function onEvent(_--[[self]], event, ...)
-	handlers[event](event, ...)
+local function onEvent(_--[[self]], ...)
+	addon.events.trigger(...)
 end
 
 eventsFrame:SetScript('OnEvent', onEvent)
+
+
+function addon.events.trigger(event, ...)
+	local handler = handlers[event]
+	assert(handler, event)
+	handler(event, ...)
+end
 
 
 function addon.events.on(event, callback)
