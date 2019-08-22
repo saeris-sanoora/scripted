@@ -75,31 +75,24 @@ function addon.utils.matches(actual, wanted)
 end
 
 
-function addon.utils.test(func, test)
-	if _G.SaerisDevTools then
-		_G.SaerisDevTools.registerTest(kAddonName, func, test)
-	end
+local function formatMessage(message, ...)
+	local formattedMessage = message:format(...)
+	return ('%s: %s'):format(kAddonName, formattedMessage)
 end
 
 
 function addon.utils.print(message, ...)
-	local formattedMessage = message:format(...)
-	local fullMessage = ('%s: %s'):format(kAddonName, formattedMessage)
-	print(fullMessage)
+	print(formatMessage(message, ...))
 end
 
 
 function addon.utils.error(message, ...)
-	local formattedMessage = message:format(...)
-	local fullMessage = ('%s: %s'):format(kAddonName, formattedMessage)
-	error(fullMessage)
+	error(formatMessage(message, ...))
 end
 
 
 function addon.utils.softerror(message, ...)
-	local formattedMessage = message:format(...)
-	local fullMessage = ('%s: %s'):format(kAddonName, formattedMessage)
-	_G.geterrorhandler()(fullMessage)
+	_G.geterrorhandler()(formatMessage(message, ...))
 end
 
 
@@ -182,14 +175,15 @@ function addon.utils.createStore(reducer)
 	end
 
 	local function dispatch(action)
-		if addon.doProfile then
+		local isDebug = state.debug
+		if isDebug then
 			_G.debugprofilestart()
 		end
 		state = reducer(state, action)
 		for _, listener in ipairs(listeners) do
 			listener()
 		end
-		if addon.doProfile then
+		if isDebug then
 			local durationMs = _G.debugprofilestop()
 			addon.utils.print('Duration for action %q: %s ms', action.name, durationMs)
 		end
